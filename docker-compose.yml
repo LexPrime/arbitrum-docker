@@ -1,0 +1,94 @@
+version: '3.9'
+
+x-logging:
+  &logging
+  logging:
+    options:
+      max-size: 50m
+      max-file: "3"
+
+services:
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "443:443"
+    command:
+      - "--api=true"
+      - "--api.insecure=true"
+      - "--api.dashboard=true"
+      - "--log.level=DEBUG"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=$EMAIL"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    volumes:
+      - "traefik_letsencrypt:/letsencrypt"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.ipwhitelist.ipwhitelist.sourcerange=$WHITELIST"
+
+
+  arb-classic:
+    image: kw1k/arbnode:latest
+    container_name: arb-classic
+    restart: unless-stopped
+    stop_grace_period: 3m
+    env_file:
+      - .env
+    volumes:
+      - "./arb-classic/:/home/user/.arbitrum/mainnet"
+    expose:
+      - 8547
+      - 8548
+    command: |
+      --l1.url=http://157.90.129.25:9889
+      --node.chain-id=42161
+      --l2.disable-upstream
+      --node.cache.allow-slow-lookup
+      --node.rpc.tracing.enable
+      --core.checkpoint-gas-frequency=156250000
+      --core.lazy-load-core-machine
+      --node.rpc.enable-l1-calls
+      --l2.final-classic-block=22207816
+    <<: *logging
+
+
+  arb-nitro:
+    image: offchainlabs/nitro-node:$NITRO_VERSION
+    restart: unless-stopped
+    container_name: arb-nitro
+    stop_grace_period: 3m
+    env_file:
+      - .env
+    expose:
+      - 8547
+      - 8548
+    volumes:
+      - ./arb-nitro:/home/user/.arbitrum
+    command: |
+      --l1.url=http://157.90.129.25:9889
+      --l2.chain-id=42161
+      --node.rpc.classic-redirect=http://arb-classic:8547
+      --http.api=net,web3,eth,debug
+      --http.corsdomain=*
+      --http.addr=0.0.0.0
+      --http.vhosts=*
+      --node.caching.archive
+    <<: *logging
+    labels:
+    - "traefik.enable=true"
+    - "traefik.http.services.arb.loadbalancer.server.port=8547"
+    - "traefik.http.routers.arb.entrypoints=websecure"
+    - "traefik.http.routers.arb.tls.certresolver=myresolver"
+    - "traefik.http.routers.arb.rule=Host(`$DOMAIN`)"
+    - "traefik.http.routers.arb.middlewares=ipwhitelist"
+
+volumes:
+  traefik_letsencrypt:
