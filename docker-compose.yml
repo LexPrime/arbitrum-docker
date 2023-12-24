@@ -38,17 +38,18 @@ services:
   arb-classic:
     image: kw1k/arbnode:latest
     container_name: arb-classic
+    user: root
     restart: unless-stopped
     stop_grace_period: 3m
     env_file:
       - .env
     volumes:
-      - "./arb-classic/:/home/user/.arbitrum/mainnet"
+      - "./arb-classic:/root/.arbitrum/mainnet"
     expose:
       - 8547
       - 8548
     command: |
-      --l1.url=http://157.90.129.25:9889
+      --l1.url=${L1_URL}
       --node.chain-id=42161
       --l2.disable-upstream
       --node.cache.allow-slow-lookup
@@ -58,10 +59,18 @@ services:
       --node.rpc.enable-l1-calls
       --l2.final-classic-block=22207816
     <<: *logging
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.arb-classic.loadbalancer.server.port=8547"
+      - "traefik.http.routers.arb-classic.entrypoints=websecure"
+      - "traefik.http.routers.arb-classic.tls.certresolver=myresolver"
+      - "traefik.http.routers.arb-classic.rule=Host(`$CLASSIC_DOMAIN`)"
+      - "traefik.http.routers.arb-classic.middlewares=ipwhitelist"
 
 
   arb-nitro:
     image: offchainlabs/nitro-node:$NITRO_VERSION
+    user: root
     restart: unless-stopped
     container_name: arb-nitro
     stop_grace_period: 3m
@@ -71,10 +80,10 @@ services:
       - 8547
       - 8548
     volumes:
-      - ./arb-nitro:/home/user/.arbitrum
+      - ./arb-nitro:/root/.arbitrum
     command: |
-      --l1.url=http://157.90.129.25:9889
-      --l2.chain-id=42161
+      --parent-chain.connection.url=${L1_URL}
+      --chain.id=42161
       --node.rpc.classic-redirect=http://arb-classic:8547
       --http.api=net,web3,eth,debug
       --http.corsdomain=*
