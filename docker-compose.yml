@@ -89,7 +89,7 @@ services:
       --http.corsdomain=*
       --http.addr=0.0.0.0
       --http.vhosts=*
-      --node.caching.archive
+      --execution.caching.archive
     <<: *logging
     labels:
     - "traefik.enable=true"
