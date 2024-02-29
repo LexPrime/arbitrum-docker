@@ -36,7 +36,8 @@ services:
 
 
   arb-classic:
-    image: kw1k/arbnode:latest
+    #image: kw1k/arbnode:latest
+    image: offchainlabs/arb-node:v1.4.5-e97c1a4
     container_name: arb-classic
     user: root
     restart: unless-stopped
@@ -84,12 +85,12 @@ services:
     command: |
       --parent-chain.connection.url=${L1_URL}
       --chain.id=42161
-      --node.rpc.classic-redirect=http://arb-classic:8547
       --http.api=net,web3,eth,debug
       --http.corsdomain=*
       --http.addr=0.0.0.0
       --http.vhosts=*
       --execution.caching.archive
+      --execution.rpc.classic-redirect=http://arb-classic:8547
     <<: *logging
     labels:
     - "traefik.enable=true"
