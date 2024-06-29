@@ -1,5 +1,3 @@
-version: '3.9'
-
 x-logging:
   &logging
   logging:
@@ -58,7 +56,7 @@ services:
       --core.checkpoint-gas-frequency=156250000
       --core.lazy-load-core-machine
       --node.rpc.enable-l1-calls
-      --l2.final-classic-block=22207816
+    ##--l2.final-classic-block=22207816
     <<: *logging
     labels:
       - "traefik.enable=true"
