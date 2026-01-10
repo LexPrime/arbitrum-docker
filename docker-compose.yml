@@ -43,14 +43,11 @@ services:
 
 
   arb-classic:
-    #image: kw1k/arbnode:latest
     image: offchainlabs/arb-node:v1.4.5-e97c1a4
     container_name: arb-classic
     user: root
     restart: unless-stopped
     stop_grace_period: 3m
-    env_file:
-      - .env
     volumes:
       - "./arb-classic:/root/.arbitrum/mainnet"
     expose:
@@ -65,11 +62,10 @@ services:
       --core.checkpoint-gas-frequency=156250000
       --core.lazy-load-core-machine
       --node.rpc.enable-l1-calls
-    #--l2.final-classic-block=22207816
     <<: *logging
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.arb-classic.rule=Host(`$DOMAIN`) && PathPrefix(`/classic`)""
+      - "traefik.http.routers.arb-classic.rule=Host(`$DOMAIN`) && PathPrefix(`/classic`)"
       - "traefik.http.services.arb-classic.loadbalancer.server.port=8547"
       - "traefik.http.routers.arb-classic.entrypoints=websecure"
       - "traefik.http.routers.arb-classic.tls.certresolver=myresolver"
@@ -82,8 +78,6 @@ services:
     container_name: arb-nitro
     stop_grace_period: 3m
     mem_limit: 40g
-    env_file:
-      - .env
     expose:
       - 8547
       - 8548
