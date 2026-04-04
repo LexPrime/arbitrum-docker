@@ -43,13 +43,16 @@ services:
 
 
   arb-classic:
-    image: offchainlabs/arb-node:v1.4.5-e97c1a4
+    image: offchainlabs/arb-node:v1.4.6-551a39b3
     container_name: arb-classic
-    user: root
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
     restart: unless-stopped
     stop_grace_period: 3m
     volumes:
-      - "./arb-classic:/root/.arbitrum/mainnet"
+      - "./arb-classic:/home/user/.arbitrum/mainnet"
     expose:
       - 8547
       - 8548
@@ -73,16 +76,15 @@ services:
 
   arb-nitro:
     image: offchainlabs/nitro-node:$NITRO_VERSION
-    user: root
     restart: unless-stopped
     container_name: arb-nitro
-    stop_grace_period: 3m
+    stop_grace_period: "30m"
     mem_limit: 40g
     expose:
       - 8547
       - 8548
     volumes:
-      - ./arb-nitro:/root/.arbitrum
+      - ./arb-nitro:/home/user/.arbitrum
     command: |
       --parent-chain.connection.url=${L1_URL}
       --parent-chain.blob-client.beacon-url=${CL_URL}
